@@ -1,0 +1,26 @@
+{
+  "name": "SENTINAL.Watcher",
+  "version": "0.0.0",
+  "description": "Proactive monitoring, watches specified events for predefined set of conditions, raises event if occurs",
+  "main": "index.js",
+  "scripts": {
+    "test": "grunt"
+  },
+  "author": "Steve Elliott",
+  "license": "ISC",
+  "devDependencies": {
+    "grunt": "^0.4.4",
+    "grunt-contrib-jshint": "~0.4.3",
+    "mocha": "~1.12.1",
+    "grunt-mocha-cli": "~1.7.0",
+    "load-grunt-tasks": "~0.4.0",
+    "jshint-stylish": "~0.1.5",
+    "expect.js": "~0.3.1"
+  },
+  "dependencies": {
+    "elasticsearch": "^2.1.4",
+    "moment": "^2.6.0",
+    "async": "^0.8.0",
+    "lodash": "^2.4.1"
+  }
+}
