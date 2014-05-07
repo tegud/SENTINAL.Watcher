@@ -1,15 +1,11 @@
 var async = require('async');
 var _ = require('lodash');
-var fs = require('fs');
 var alerts = require('./lib/alerts');
 var config = require('./lib/config');
-
 
 var dir = __dirname + '/config';
 
 config.getConfiguredAlerts(dir, function(err, configuredAlerts) {
-	console.log(configuredAlerts);
-
 	var setNextPing = setTimeout.bind(null, ping, 25000);
 	
 	var ping = function() {
