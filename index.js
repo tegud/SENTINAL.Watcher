@@ -6,14 +6,12 @@ var config = require('./lib/config');
 var dir = __dirname + '/config';
 
 config.getConfiguredAlerts(dir, function(err, configuredAlerts) {
-	var setNextPing = setTimeout.bind(null, ping, 25000);
-	
 	var ping = function() {
 		console.log('Checking alerts...');
 
 		async.parallel(alertCheckTasks, function() {
 			console.log('alert checks complete');
-			setNextPing();
+			setTimeout(ping, 5000);
 		});
 	};
 
