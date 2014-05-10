@@ -1,5 +1,4 @@
 var async = require('async');
-var _ = require('lodash');
 var config = require('./lib/config');
 var modules = require('./lib/modules');
 
