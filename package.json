@@ -21,6 +21,7 @@
     "elasticsearch": "^2.1.4",
     "moment": "^2.6.0",
     "async": "^0.8.0",
-    "lodash": "^2.4.1"
+    "lodash": "^2.4.1",
+    "nodemailer": "^0.6.3"
   }
 }
