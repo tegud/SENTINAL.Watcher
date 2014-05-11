@@ -98,13 +98,13 @@ describe('notifiers', function() {
 				var expectedNotificationConfig = { type: 'test1', abcd: 1234 };
 
 				notifiers.registerNotifier('test1', { 
-					notify: function(event) {
-						actualNotificationConfig = event.notifierConfig;
+					notify: function(event, notifierConfig) {
+						actualNotificationConfig = notifierConfig;
 					} 
 				});
 
 				notifiers.registerNotifier('test2', { 
-					notify: function(event) { } 
+					notify: function() { } 
 				});
 
 				notifiers.registerAlertNotifications('elasticsearch-lag', [
@@ -125,8 +125,8 @@ describe('notifiers', function() {
 				var expectedNotificationConfig = undefined;
 
 				notifiers.registerNotifier('test1', { 
-					notify: function(event) {
-						actualNotificationConfig = event.notifierConfig;
+					notify: function(event, notifierConfig) {
+						actualNotificationConfig = notifierConfig;
 					} 
 				});
 
