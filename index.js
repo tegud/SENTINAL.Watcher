@@ -7,5 +7,11 @@ async.series([
 		modules.initialiseAll
 	], 
 	function(err) {
-		console.log('Start up of SENTINAL.Watcher completed.');
+		if(err) {
+			console.log('SENTINAL.Watcher start up failed with error:');
+			console.log(err);
+		}
+		else {
+			console.log('Start up of SENTINAL.Watcher completed.');
+		}
 	});
