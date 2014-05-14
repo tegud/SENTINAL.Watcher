@@ -65,7 +65,7 @@ describe('elasticsearch-errors', function() {
 		done);
 	});
 
-	it('queries elastic search with the configured query', function(done) {
+	it('queries elasticsearch with the configured query', function(done) {
 		async.series([
 			async.apply(elasticsearchSimpleQueryAlert.configure, {
 				query: 'keyword'
@@ -79,14 +79,59 @@ describe('elasticsearch-errors', function() {
 		done);
 	});
 
-	it('filters elastic search query with a timestamp range ending at the current date and time', function(done) {
+	it('filters elasticsearch query with a timestamp range ending at the current date and time', function(done) {
 		currentDate = '14-05-2014 16:23 Z';
 	
+		async.series([
+			async.apply(elasticsearchSimpleQueryAlert.configure, {
+				time: '10 minutes'
+			}),
+			elasticsearchSimpleQueryAlert.initialise,
+			function(callback) {
+				expect(actualRequest.body.query.filtered.filter.bool.must[0].range['@timestamp'].to).to.be(moment(currentDate, 'DD-MM-YYYY HH:mm Z').valueOf());
+				callback();
+			}
+		], 
+		done);
+	});
+
+	it('filters elasticsearch query with a timestamp range starting at the current date and time', function(done) {
+		currentDate = '14-05-2014 16:23 Z';
+		tenMinutesBefore = moment(currentDate, 'DD-MM-YYYY HH:mm Z').subtract('minutes', 10);
+	
+		async.series([
+			async.apply(elasticsearchSimpleQueryAlert.configure, {
+				time: '10 minutes'
+			}),
+			elasticsearchSimpleQueryAlert.initialise,
+			function(callback) {
+				expect(actualRequest.body.query.filtered.filter.bool.must[0].range['@timestamp'].from).to.be(tenMinutesBefore.valueOf());
+				callback();
+			}
+		], 
+		done);
+	});
+
+	it('does not filter elasticsearch query when no time specified', function(done) {
 		async.series([
 			async.apply(elasticsearchSimpleQueryAlert.configure, { }),
 			elasticsearchSimpleQueryAlert.initialise,
 			function(callback) {
-				expect(actualRequest.body.query.filtered.filter.bool.must[0].range['@timestamp'].to).to.be(moment(currentDate, 'DD-MM-YYYY HH:mm Z').valueOf());
+				expect(actualRequest.body.query.filtered.filter).to.be(undefined);
+				callback();
+			}
+		], 
+		done);
+	});
+
+	it('limits number of results that the elasticsearch query returns to the configured value', function(done) {
+		async.series([
+			async.apply(elasticsearchSimpleQueryAlert.configure, {
+				limitResultsTo: 100
+			}),
+			elasticsearchSimpleQueryAlert.initialise,
+			function(callback) {
+				expect(actualRequest.body.size).to.be(100);
 				callback();
 			}
 		], 
