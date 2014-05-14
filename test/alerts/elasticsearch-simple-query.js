@@ -5,7 +5,7 @@ var moment = require('moment');
 var proxyquire = require('proxyquire');
 var moment = require('moment');
 
-var currentDate = '01-01-2014';
+var currentDate = '01-01-2014 00:00 Z';
 
 describe('elasticsearch-errors', function() {
 	var elasticsearchSimpleQueryAlert;
@@ -45,13 +45,13 @@ describe('elasticsearch-errors', function() {
 				}
 			},
 			'moment': function() {
-				return moment(currentDate, 'DD-MM-YYYY');
+				return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
 			}
 		});
 	});
 
 	it('queries today and yesterday\'s logstash indicies', function(done){
-		currentDate = '14-05-2014';
+		currentDate = '14-05-2014 00:00 Z';
 		var expectedIndex = 'logstash-2014.05.14,logstash-2014.05.13';
 
 		async.series([
@@ -80,11 +80,13 @@ describe('elasticsearch-errors', function() {
 	});
 
 	it('filters elastic search query with a timestamp range ending at the current date and time', function(done) {
+		currentDate = '14-05-2014 16:23 Z';
+	
 		async.series([
 			async.apply(elasticsearchSimpleQueryAlert.configure, { }),
 			elasticsearchSimpleQueryAlert.initialise,
 			function(callback) {
-				expect(actualRequest.body.query.filtered.filter.bool.must[0].range['@timestamp'].to).to.be(123456789);
+				expect(actualRequest.body.query.filtered.filter.bool.must[0].range['@timestamp'].to).to.be(moment(currentDate, 'DD-MM-YYYY HH:mm Z').valueOf());
 				callback();
 			}
 		], 
