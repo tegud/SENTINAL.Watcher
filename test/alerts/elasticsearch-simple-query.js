@@ -4,6 +4,7 @@ var nock = require('nock');
 var moment = require('moment');
 var proxyquire = require('proxyquire');
 var moment = require('moment');
+var notifiers = require('../../lib/modules/notifiers');
 
 var currentDate = '01-01-2014 00:00 Z';
 
@@ -146,15 +147,96 @@ describe('elasticsearch-errors', function() {
 	describe('handles the response from elasticsearch', function() {
 		beforeEach(function() {
 			actualRequest = null;
+
+			notifiers.clear();
+
 			elasticsearchSimpleQueryAlert = proxyquire('../../lib/modules/alerts/elasticsearch-simple-query', {
 				'../../modules/schedulers': fakeScheduler
 			});
 		});
+
+		it('notifies of breach event when number of errors returned is over the threshold set', function(done) {
+			nock('http://myelasticsearch.com:9200')
+				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
+				.post('/logstash-date%2Clogstash-date/_search')
+				.reply(200, {
+					hits: {
+						hits: [{ '_source': { '@timestamp': 12345 } }, { '_source': { '@timestamp': 12345 } }]
+					}
+				});
+
+			notifiers.registerNotifier('test', {
+				notify: function() {
+					done();
+				}
+			});
+
+			async.series([
+				async.apply(elasticsearchSimpleQueryAlert.configure, {
+					host: 'http://myelasticsearch.com:9200',
+					limit: 1,
+					notifications: [
+						{ "type": "test", "levels": ["breach"] }
+					]
+				}),
+				elasticsearchSimpleQueryAlert.initialise
+			]);
+		});
+
+		it('notifies of info event when number of errors returned is not over the threshold set', function(done) {
+			nock('http://myelasticsearch.com:9200')
+				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
+				.post('/logstash-date%2Clogstash-date/_search')
+				.reply(200, {
+					hits: {
+						hits: [{ '_source': { '@timestamp': 12345 } }]
+					}
+				});
+
+			notifiers.registerNotifier('test', {
+				notify: function() {
+					done();
+				}
+			});
+
+			async.series([
+				async.apply(elasticsearchSimpleQueryAlert.configure, {
+					host: 'http://myelasticsearch.com:9200',
+					limit: 1,
+					notifications: [
+						{ "type": "test", "levels": ["info"] }
+					]
+				}),
+				elasticsearchSimpleQueryAlert.initialise
+			]);
+		});
+
+		it('specifies number of errors when notifing of event', function(done) {
+			nock('http://myelasticsearch.com:9200')
+				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
+				.post('/logstash-date%2Clogstash-date/_search')
+				.reply(200, {
+					hits: {
+						hits: [{ '_source': { '@timestamp': 12345 } }, { '_source': { '@timestamp': 12345 } }]
+					}
+				});
+			notifiers.registerNotifier('test', {
+				notify: function(event) {
+					expect(event.info.errors).to.be(2);
+					done();
+				}
+			});
+
+			async.series([
+				async.apply(elasticsearchSimpleQueryAlert.configure, {
+					host: 'http://myelasticsearch.com:9200',
+					limit: 1,
+					notifications: [
+						{ "type": "test", "levels": ["breach"] }
+					]
+				}),
+				elasticsearchSimpleQueryAlert.initialise
+			]);
+		});
 	});
 });
-		// nock('http://myelasticsearch.com:9200')
-		// 	.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
-		// 	.post('/logstash-date%2Clogstash-date/_search')
-		// 	.reply(200, {
-		// 		abcde: 1234
-		// 	});
