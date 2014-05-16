@@ -56,12 +56,13 @@ describe('elasticsearch-errors', function() {
 		});
 
 		it('queries today and yesterday\'s logstash indicies', function(done){
+			var alert = new elasticsearchSimpleQueryAlert();
 			currentDate = '14-05-2014 00:00 Z';
 			var expectedIndex = 'logstash-2014.05.14,logstash-2014.05.13';
 
 			async.series([
-				async.apply(elasticsearchSimpleQueryAlert.configure, { }),
-				elasticsearchSimpleQueryAlert.initialise,
+				async.apply(alert.configure, { }),
+				alert.initialise,
 				function(callback) {
 					expect(actualRequest.index).to.be(expectedIndex);
 					callback();
@@ -71,11 +72,12 @@ describe('elasticsearch-errors', function() {
 		});
 
 		it('queries elasticsearch with the configured query', function(done) {
+			var alert = new elasticsearchSimpleQueryAlert();
 			async.series([
-				async.apply(elasticsearchSimpleQueryAlert.configure, {
+				async.apply(alert.configure, {
 					query: 'keyword'
 				}),
-				elasticsearchSimpleQueryAlert.initialise,
+				alert.initialise,
 				function(callback) {
 					expect(actualRequest.body.query.filtered.query.bool.should[0]['query_string']['query']).to.be('keyword');
 					callback();
@@ -85,13 +87,14 @@ describe('elasticsearch-errors', function() {
 		});
 
 		it('filters elasticsearch query with a timestamp range ending at the current date and time', function(done) {
+			var alert = new elasticsearchSimpleQueryAlert();
 			currentDate = '14-05-2014 16:23 Z';
 
 			async.series([
-				async.apply(elasticsearchSimpleQueryAlert.configure, {
+				async.apply(alert.configure, {
 					time: '10 minutes'
 				}),
-				elasticsearchSimpleQueryAlert.initialise,
+				alert.initialise,
 				function(callback) {
 					expect(actualRequest.body.query.filtered.filter.bool.must[0].range['@timestamp'].to).to.be(moment(currentDate, 'DD-MM-YYYY HH:mm Z').valueOf());
 					callback();
@@ -101,14 +104,15 @@ describe('elasticsearch-errors', function() {
 		});
 
 		it('filters elasticsearch query with a timestamp range starting at the current date and time', function(done) {
+			var alert = new elasticsearchSimpleQueryAlert();
 			currentDate = '14-05-2014 16:23 Z';
 			tenMinutesBefore = moment(currentDate, 'DD-MM-YYYY HH:mm Z').subtract('minutes', 10);
 
 			async.series([
-				async.apply(elasticsearchSimpleQueryAlert.configure, {
+				async.apply(alert.configure, {
 					time: '10 minutes'
 				}),
-				elasticsearchSimpleQueryAlert.initialise,
+				alert.initialise,
 				function(callback) {
 					expect(actualRequest.body.query.filtered.filter.bool.must[0].range['@timestamp'].from).to.be(tenMinutesBefore.valueOf());
 					callback();
@@ -118,9 +122,10 @@ describe('elasticsearch-errors', function() {
 		});
 
 		it('does not filter elasticsearch query when no time specified', function(done) {
+			var alert = new elasticsearchSimpleQueryAlert();
 			async.series([
-				async.apply(elasticsearchSimpleQueryAlert.configure, { }),
-				elasticsearchSimpleQueryAlert.initialise,
+				async.apply(alert.configure, { }),
+				alert.initialise,
 				function(callback) {
 					expect(actualRequest.body.query.filtered.filter).to.be(undefined);
 					callback();
@@ -130,11 +135,12 @@ describe('elasticsearch-errors', function() {
 		});
 
 		it('limits number of results that the elasticsearch query returns to the configured value', function(done) {
+			var alert = new elasticsearchSimpleQueryAlert();
 			async.series([
-				async.apply(elasticsearchSimpleQueryAlert.configure, {
+				async.apply(alert.configure, {
 					limitResultsTo: 100
 				}),
-				elasticsearchSimpleQueryAlert.initialise,
+				alert.initialise,
 				function(callback) {
 					expect(actualRequest.body.size).to.be(100);
 					callback();
@@ -156,6 +162,8 @@ describe('elasticsearch-errors', function() {
 		});
 
 		it('notifies of breach event when number of errors returned is over the threshold set', function(done) {
+			var alert = new elasticsearchSimpleQueryAlert();
+
 			nock('http://myelasticsearch.com:9200')
 				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
 				.post('/logstash-date%2Clogstash-date/_search')
@@ -172,18 +180,20 @@ describe('elasticsearch-errors', function() {
 			});
 
 			async.series([
-				async.apply(elasticsearchSimpleQueryAlert.configure, {
+				async.apply(alert.configure, {
 					host: 'http://myelasticsearch.com:9200',
 					limit: 1,
 					notifications: [
 						{ "type": "test", "levels": ["breach"] }
 					]
 				}),
-				elasticsearchSimpleQueryAlert.initialise
+				alert.initialise
 			]);
 		});
 
 		it('notifies of info event when number of errors returned is not over the threshold set', function(done) {
+			var alert = new elasticsearchSimpleQueryAlert();
+
 			nock('http://myelasticsearch.com:9200')
 				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
 				.post('/logstash-date%2Clogstash-date/_search')
@@ -200,18 +210,20 @@ describe('elasticsearch-errors', function() {
 			});
 
 			async.series([
-				async.apply(elasticsearchSimpleQueryAlert.configure, {
+				async.apply(alert.configure, {
 					host: 'http://myelasticsearch.com:9200',
 					limit: 1,
 					notifications: [
 						{ "type": "test", "levels": ["info"] }
 					]
 				}),
-				elasticsearchSimpleQueryAlert.initialise
+				alert.initialise
 			]);
 		});
 
 		it('specifies number of errors when notifing of event', function(done) {
+			var alert = new elasticsearchSimpleQueryAlert();
+			
 			nock('http://myelasticsearch.com:9200')
 				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
 				.post('/logstash-date%2Clogstash-date/_search')
@@ -228,14 +240,14 @@ describe('elasticsearch-errors', function() {
 			});
 
 			async.series([
-				async.apply(elasticsearchSimpleQueryAlert.configure, {
+				async.apply(alert.configure, {
 					host: 'http://myelasticsearch.com:9200',
 					limit: 1,
 					notifications: [
 						{ "type": "test", "levels": ["breach"] }
 					]
 				}),
-				elasticsearchSimpleQueryAlert.initialise
+				alert.initialise
 			]);
 		});
 	});
