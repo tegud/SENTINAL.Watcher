@@ -38,7 +38,10 @@ describe('elasticsearch-simple-query', function() {
 			};
 
 			elasticsearchQueryBuilder = proxyquire('../../lib/modules/sources/elasticsearch/queryBuilder', {
-				'moment': fakeMoment
+				'moment': fakeMoment,
+				'../../../utilities/timeRangeFromNow': proxyquire('../../lib/utilities/timeRangeFromNow', {
+					'moment': fakeMoment
+				})
 			});
 
 			elasticsearchSimpleQueryAlert = proxyquire('../../lib/modules/alerts/elasticsearch-simple-query', {
@@ -73,7 +76,7 @@ describe('elasticsearch-simple-query', function() {
 			var expectedIndex = 'logstash-2014.05.14,logstash-2014.05.13';
 
 			async.series([
-				async.apply(alert.configure, { }),
+				async.apply(alert.configure, { query: {} }),
 				alert.initialise,
 				function(callback) {
 					expect(actualIndex).to.be(expectedIndex);
@@ -87,7 +90,9 @@ describe('elasticsearch-simple-query', function() {
 			var alert = new elasticsearchSimpleQueryAlert();
 			async.series([
 				async.apply(alert.configure, {
-					query: 'keyword'
+					query: {
+						query: 'keyword'
+					}
 				}),
 				alert.initialise,
 				function(callback) {
@@ -104,7 +109,9 @@ describe('elasticsearch-simple-query', function() {
 
 			async.series([
 				async.apply(alert.configure, {
-					time: '10 minutes'
+					query: {
+						time: '10 minutes'
+					}
 				}),
 				alert.initialise,
 				function(callback) {
@@ -122,7 +129,9 @@ describe('elasticsearch-simple-query', function() {
 
 			async.series([
 				async.apply(alert.configure, {
-					time: '10 minutes'
+					query: {
+						time: '10 minutes'
+					}
 				}),
 				alert.initialise,
 				function(callback) {
@@ -136,7 +145,7 @@ describe('elasticsearch-simple-query', function() {
 		it('does not filter elasticsearch query when no time specified', function(done) {
 			var alert = new elasticsearchSimpleQueryAlert();
 			async.series([
-				async.apply(alert.configure, { }),
+				async.apply(alert.configure, { query: {} }),
 				alert.initialise,
 				function(callback) {
 					expect(actualRequest.query.filtered.filter).to.be(undefined);
@@ -150,7 +159,9 @@ describe('elasticsearch-simple-query', function() {
 			var alert = new elasticsearchSimpleQueryAlert();
 			async.series([
 				async.apply(alert.configure, {
-					limitResultsTo: 100
+					query: {
+						numberOfResults: 100
+					}
 				}),
 				alert.initialise,
 				function(callback) {
@@ -177,7 +188,8 @@ describe('elasticsearch-simple-query', function() {
 
 			async.series([
 					async.apply(elasticSearchSource.configure, {
-						host: 'http://myelasticsearch.com:9200'
+						host: 'http://myelasticsearch.com:9200',
+						query: {}
 					}),
 					elasticSearchSource.initialise,
 					function(callback) {
@@ -211,6 +223,7 @@ describe('elasticsearch-simple-query', function() {
 					host: 'http://myelasticsearch.com:9200',
 					source: 'elasticsearch',
 					limit: 1,
+					query: {},
 					notifications: [
 						{ "type": "test", "levels": ["breach"] }
 					]
@@ -242,6 +255,7 @@ describe('elasticsearch-simple-query', function() {
 					host: 'http://myelasticsearch.com:9200',
 					source: 'elasticsearch',
 					limit: 1,
+					query: {},
 					notifications: [
 						{ "type": "test", "levels": ["info"] }
 					]
@@ -273,6 +287,7 @@ describe('elasticsearch-simple-query', function() {
 					host: 'http://myelasticsearch.com:9200',
 					source: 'elasticsearch',
 					limit: 1,
+					query: {},
 					notifications: [
 						{ "type": "test", "levels": ["breach"] }
 					]
