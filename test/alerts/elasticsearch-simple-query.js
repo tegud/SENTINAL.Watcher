@@ -21,21 +21,32 @@ var fakeScheduler = {
 	}
 };
 
-describe('elasticsearch-errors', function() {
+describe('elasticsearch-simple-query', function() {
 	describe('queries elasticsearch', function() {
 		var elasticsearchSimpleQueryAlert;
+		var elasticsearchQueryBuilder;
 		var actualRequest;
+		var actualIndex;
 		var currentDate = '01-01-2014 00:00 Z';
 
 		beforeEach(function() {
 			actualRequest = null;
+			actualIndex = null;
+
+			elasticsearchQueryBuilder = proxyquire('../../lib/modules/sources/elasticsearch/queryBuilder', {
+				'moment': function() {
+					return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
+				}
+			});
+
 			elasticsearchSimpleQueryAlert = proxyquire('../../lib/modules/alerts/elasticsearch-simple-query', {
 				'../../modules/schedulers': fakeScheduler,
 				'../../modules/sources': {
 					getSource: function() {
 						return {
-							search: function(request) {
-								actualRequest = request;
+							search: function(query) {
+								actualRequest = elasticsearchQueryBuilder(query.options);
+								actualIndex = query.index;
 
 								return {
 									then: function(callback) {
@@ -52,7 +63,7 @@ describe('elasticsearch-errors', function() {
 				},
 				'moment': function() {
 					return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
-				}
+				},
 			});
 		});
 
@@ -65,7 +76,7 @@ describe('elasticsearch-errors', function() {
 				async.apply(alert.configure, { }),
 				alert.initialise,
 				function(callback) {
-					expect(actualRequest.index).to.be(expectedIndex);
+					expect(actualIndex).to.be(expectedIndex);
 					callback();
 				}
 			], 
@@ -80,7 +91,7 @@ describe('elasticsearch-errors', function() {
 				}),
 				alert.initialise,
 				function(callback) {
-					expect(actualRequest.body.query.filtered.query.bool.should[0]['query_string']['query']).to.be('keyword');
+					expect(actualRequest.query.filtered.query.bool.should[0]['query_string']['query']).to.be('keyword');
 					callback();
 				}
 			], 
@@ -97,7 +108,7 @@ describe('elasticsearch-errors', function() {
 				}),
 				alert.initialise,
 				function(callback) {
-					expect(actualRequest.body.query.filtered.filter.bool.must[0].range['@timestamp'].to).to.be(moment(currentDate, 'DD-MM-YYYY HH:mm Z').valueOf());
+					expect(actualRequest.query.filtered.filter.bool.must[0].range['@timestamp'].to).to.be(moment(currentDate, 'DD-MM-YYYY HH:mm Z').valueOf());
 					callback();
 				}
 			], 
@@ -115,7 +126,7 @@ describe('elasticsearch-errors', function() {
 				}),
 				alert.initialise,
 				function(callback) {
-					expect(actualRequest.body.query.filtered.filter.bool.must[0].range['@timestamp'].from).to.be(tenMinutesBefore.valueOf());
+					expect(actualRequest.query.filtered.filter.bool.must[0].range['@timestamp'].from).to.be(tenMinutesBefore.valueOf());
 					callback();
 				}
 			], 
@@ -128,7 +139,7 @@ describe('elasticsearch-errors', function() {
 				async.apply(alert.configure, { }),
 				alert.initialise,
 				function(callback) {
-					expect(actualRequest.body.query.filtered.filter).to.be(undefined);
+					expect(actualRequest.query.filtered.filter).to.be(undefined);
 					callback();
 				}
 			], 
@@ -143,7 +154,7 @@ describe('elasticsearch-errors', function() {
 				}),
 				alert.initialise,
 				function(callback) {
-					expect(actualRequest.body.size).to.be(100);
+					expect(actualRequest.size).to.be(100);
 					callback();
 				}
 			], 
