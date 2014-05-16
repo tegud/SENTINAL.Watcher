@@ -3,8 +3,9 @@ var async = require('async');
 var nock = require('nock');
 var moment = require('moment');
 var proxyquire = require('proxyquire');
-var moment = require('moment');
 var notifiers = require('../../lib/modules/notifiers');
+var sources = require('../../lib/modules/sources');
+var elasticsearch = require('../../lib/modules/sources/elasticsearch');
 
 var currentDate = '01-01-2014 00:00 Z';
 
@@ -30,8 +31,8 @@ describe('elasticsearch-errors', function() {
 			actualRequest = null;
 			elasticsearchSimpleQueryAlert = proxyquire('../../lib/modules/alerts/elasticsearch-simple-query', {
 				'../../modules/schedulers': fakeScheduler,
-				'elasticsearch': {
-					Client: function() {
+				'../../modules/sources': {
+					getSource: function() {
 						return {
 							search: function(request) {
 								actualRequest = request;
@@ -151,14 +152,29 @@ describe('elasticsearch-errors', function() {
 	});
 
 	describe('handles the response from elasticsearch', function() {
-		beforeEach(function() {
+		beforeEach(function(done) {
 			actualRequest = null;
 
 			notifiers.clear();
+			sources.clear();
 
 			elasticsearchSimpleQueryAlert = proxyquire('../../lib/modules/alerts/elasticsearch-simple-query', {
 				'../../modules/schedulers': fakeScheduler
 			});
+
+			var elasticSearchSource = new elasticsearch();
+
+			async.series([
+					async.apply(elasticSearchSource.configure, {
+						host: 'http://myelasticsearch.com:9200'
+					}),
+					elasticSearchSource.initialise,
+					function(callback) {
+						sources.registerSource('elasticsearch', elasticSearchSource);
+						callback();
+					}
+				], done);
+
 		});
 
 		it('notifies of breach event when number of errors returned is over the threshold set', function(done) {
@@ -182,6 +198,7 @@ describe('elasticsearch-errors', function() {
 			async.series([
 				async.apply(alert.configure, {
 					host: 'http://myelasticsearch.com:9200',
+					source: 'elasticsearch',
 					limit: 1,
 					notifications: [
 						{ "type": "test", "levels": ["breach"] }
@@ -212,6 +229,7 @@ describe('elasticsearch-errors', function() {
 			async.series([
 				async.apply(alert.configure, {
 					host: 'http://myelasticsearch.com:9200',
+					source: 'elasticsearch',
 					limit: 1,
 					notifications: [
 						{ "type": "test", "levels": ["info"] }
@@ -223,7 +241,7 @@ describe('elasticsearch-errors', function() {
 
 		it('specifies number of errors when notifing of event', function(done) {
 			var alert = new elasticsearchSimpleQueryAlert();
-			
+
 			nock('http://myelasticsearch.com:9200')
 				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
 				.post('/logstash-date%2Clogstash-date/_search')
@@ -242,6 +260,7 @@ describe('elasticsearch-errors', function() {
 			async.series([
 				async.apply(alert.configure, {
 					host: 'http://myelasticsearch.com:9200',
+					source: 'elasticsearch',
 					limit: 1,
 					notifications: [
 						{ "type": "test", "levels": ["breach"] }
