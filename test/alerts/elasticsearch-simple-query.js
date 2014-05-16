@@ -33,10 +33,12 @@ describe('elasticsearch-simple-query', function() {
 			actualRequest = null;
 			actualIndex = null;
 
+			var fakeMoment = function() {
+				return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
+			};
+
 			elasticsearchQueryBuilder = proxyquire('../../lib/modules/sources/elasticsearch/queryBuilder', {
-				'moment': function() {
-					return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
-				}
+				'moment': fakeMoment
 			});
 
 			elasticsearchSimpleQueryAlert = proxyquire('../../lib/modules/alerts/elasticsearch-simple-query', {
@@ -61,9 +63,7 @@ describe('elasticsearch-simple-query', function() {
 						};
 					}
 				},
-				'moment': function() {
-					return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
-				},
+				'moment': fakeMoment,
 			});
 		});
 
