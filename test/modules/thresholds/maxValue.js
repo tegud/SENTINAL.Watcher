@@ -43,4 +43,14 @@ describe('maxValue', function() {
 
 		expect(thresholdResult.breached).to.be(true);
 	});
+
+	it('sets threshold description\'s field name', function() {
+		var thresholdResult = new maxValue({ getLastResult: function() { return { myField: 1 }; } }, 
+			{ 
+				limit: 1, 
+				field: 'myField' 
+			}).checkValue();
+
+		expect(thresholdResult.threshold).to.be('myField > 1');
+	});
 });
