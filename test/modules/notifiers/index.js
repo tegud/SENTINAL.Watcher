@@ -1,6 +1,6 @@
 var expect = require('expect.js');
-var events = require('../../lib/events');
-var notifiers = require('../../lib/modules/notifiers');
+var events = require('../../../lib/events');
+var notifiers = require('../../../lib/modules/notifiers');
 
 describe('notifiers', function() {
 	beforeEach(function() {

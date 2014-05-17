@@ -4,9 +4,9 @@ var nock = require('nock');
 var moment = require('moment');
 var proxyquire = require('proxyquire');
 var _ = require('lodash');
-var notifiers = require('../../lib/modules/notifiers');
-var sources = require('../../lib/modules/sources');
-var elasticsearch = require('../../lib/modules/sources/elasticsearch');
+var notifiers = require('../../../lib/modules/notifiers');
+var sources = require('../../../lib/modules/sources');
+var elasticsearch = require('../../../lib/modules/sources/elasticsearch');
 
 var currentDate = '01-01-2014 00:00 Z';
 
@@ -38,14 +38,14 @@ describe('elasticsearch-simple-query', function() {
 				return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
 			};
 
-			elasticsearchQueryBuilder = proxyquire('../../lib/modules/sources/elasticsearch/queryBuilder', {
+			elasticsearchQueryBuilder = proxyquire('../../../lib/modules/sources/elasticsearch/queryBuilder', {
 				'moment': fakeMoment,
-				'../../../utilities/timeRangeFromNow': proxyquire('../../lib/utilities/timeRangeFromNow', {
+				'../../../utilities/timeRangeFromNow': proxyquire('../../../lib/utilities/timeRangeFromNow', {
 					'moment': fakeMoment
 				})
 			});
 
-			elasticsearchSimpleQueryAlert = proxyquire('../../lib/modules/alerts/elasticsearch-simple-query', {
+			elasticsearchSimpleQueryAlert = proxyquire('../../../lib/modules/alerts/elasticsearch-simple-query', {
 				'../../modules/schedulers': fakeScheduler,
 				'../../modules/sources': {
 					getSource: function() {
@@ -213,7 +213,7 @@ describe('elasticsearch-simple-query', function() {
 			notifiers.clear();
 			sources.clear();
 
-			elasticsearchSimpleQueryAlert = proxyquire('../../lib/modules/alerts/elasticsearch-simple-query', {
+			elasticsearchSimpleQueryAlert = proxyquire('../../../lib/modules/alerts/elasticsearch-simple-query', {
 				'../../modules/schedulers': fakeScheduler
 			});
 
