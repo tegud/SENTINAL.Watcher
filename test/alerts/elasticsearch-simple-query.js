@@ -3,6 +3,7 @@ var async = require('async');
 var nock = require('nock');
 var moment = require('moment');
 var proxyquire = require('proxyquire');
+var _ = require('lodash');
 var notifiers = require('../../lib/modules/notifiers');
 var sources = require('../../lib/modules/sources');
 var elasticsearch = require('../../lib/modules/sources/elasticsearch');
@@ -174,6 +175,38 @@ describe('elasticsearch-simple-query', function() {
 	});
 
 	describe('handles the response from elasticsearch', function() {
+		function setElasticsearchResponse(response) {
+			nock('http://myelasticsearch.com:9200')
+				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
+				.post('/logstash-date%2Clogstash-date/_search')
+				.reply(200, response);
+		}
+
+		function configureAndExecuteAlert(config) {
+			var alert = new elasticsearchSimpleQueryAlert();
+
+			async.series([
+				async.apply(alert.configure, config),
+				alert.initialise
+			]);
+		}
+
+		var defaultAlertConfig = {
+			source: 'elasticsearch',
+			query: {},
+			mappers: [
+				{ 
+					"type": "numberOfHits",
+					"propertyName": "errors"
+				}
+			],
+			thresholds: [{
+				type: 'maxValue',
+				limit: 1,
+				field: 'errors'
+			}]
+		};
+
 		beforeEach(function(done) {
 			actualRequest = null;
 
@@ -187,30 +220,24 @@ describe('elasticsearch-simple-query', function() {
 			var elasticSearchSource = new elasticsearch();
 
 			async.series([
-					async.apply(elasticSearchSource.configure, {
-						host: 'http://myelasticsearch.com:9200',
-						query: {}
-					}),
-					elasticSearchSource.initialise,
-					function(callback) {
-						sources.registerSource('elasticsearch', elasticSearchSource);
-						callback();
-					}
-				], done);
-
+				async.apply(elasticSearchSource.configure, {
+					host: 'http://myelasticsearch.com:9200',
+					query: {}
+				}),
+				elasticSearchSource.initialise,
+				function(callback) {
+					sources.registerSource('elasticsearch', elasticSearchSource);
+					callback();
+				}
+			], done);
 		});
 
 		it('notifies of breach event when number of errors returned is over the threshold set', function(done) {
-			var alert = new elasticsearchSimpleQueryAlert();
-
-			nock('http://myelasticsearch.com:9200')
-				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
-				.post('/logstash-date%2Clogstash-date/_search')
-				.reply(200, {
-					hits: {
-						hits: [{ '_source': { '@timestamp': 12345 } }, { '_source': { '@timestamp': 12345 } }]
-					}
-				});
+			setElasticsearchResponse({
+				hits: {
+					hits: [{ '_source': { '@timestamp': 12345 } }, { '_source': { '@timestamp': 12345 } }]
+				}
+			});
 
 			notifiers.registerNotifier('test', {
 				notify: function() {
@@ -218,31 +245,19 @@ describe('elasticsearch-simple-query', function() {
 				}
 			});
 
-			async.series([
-				async.apply(alert.configure, {
-					host: 'http://myelasticsearch.com:9200',
-					source: 'elasticsearch',
-					limit: 1,
-					query: {},
-					notifications: [
-						{ "type": "test", "levels": ["breach"] }
-					]
-				}),
-				alert.initialise
-			]);
+			configureAndExecuteAlert(_.extend({}, defaultAlertConfig, {
+				notifications: [
+					{ "type": "test", "levels": ["breach"] }
+				]
+			}));
 		});
 
 		it('notifies of info event when number of errors returned is not over the threshold set', function(done) {
-			var alert = new elasticsearchSimpleQueryAlert();
-
-			nock('http://myelasticsearch.com:9200')
-				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
-				.post('/logstash-date%2Clogstash-date/_search')
-				.reply(200, {
-					hits: {
-						hits: [{ '_source': { '@timestamp': 12345 } }]
-					}
-				});
+			setElasticsearchResponse({
+				hits: {
+					hits: [{ '_source': { '@timestamp': 12345 } }]
+				}
+			});
 
 			notifiers.registerNotifier('test', {
 				notify: function() {
@@ -250,31 +265,20 @@ describe('elasticsearch-simple-query', function() {
 				}
 			});
 
-			async.series([
-				async.apply(alert.configure, {
-					host: 'http://myelasticsearch.com:9200',
-					source: 'elasticsearch',
-					limit: 1,
-					query: {},
-					notifications: [
-						{ "type": "test", "levels": ["info"] }
-					]
-				}),
-				alert.initialise
-			]);
+			configureAndExecuteAlert(_.extend({}, defaultAlertConfig, {
+				notifications: [
+					{ "type": "test", "levels": ["info"] }
+				]
+			}));
 		});
 
 		it('specifies number of errors when notifing of event', function(done) {
-			var alert = new elasticsearchSimpleQueryAlert();
+			setElasticsearchResponse({
+				hits: {
+					hits: [{ '_source': { '@timestamp': 12345 } }, { '_source': { '@timestamp': 12345 } }]
+				}
+			});
 
-			nock('http://myelasticsearch.com:9200')
-				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
-				.post('/logstash-date%2Clogstash-date/_search')
-				.reply(200, {
-					hits: {
-						hits: [{ '_source': { '@timestamp': 12345 } }, { '_source': { '@timestamp': 12345 } }]
-					}
-				});
 			notifiers.registerNotifier('test', {
 				notify: function(event) {
 					expect(event.info.errors).to.be(2);
@@ -282,18 +286,11 @@ describe('elasticsearch-simple-query', function() {
 				}
 			});
 
-			async.series([
-				async.apply(alert.configure, {
-					host: 'http://myelasticsearch.com:9200',
-					source: 'elasticsearch',
-					limit: 1,
-					query: {},
-					notifications: [
-						{ "type": "test", "levels": ["breach"] }
-					]
-				}),
-				alert.initialise
-			]);
+			configureAndExecuteAlert(_.extend({}, defaultAlertConfig, {
+				notifications: [
+					{ "type": "test", "levels": ["breach"] }
+				]
+			}));
 		});
 	});
 });
