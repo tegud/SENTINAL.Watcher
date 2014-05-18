@@ -47,6 +47,9 @@ describe('elasticsearch-simple-query', function() {
 
 			elasticsearchSimpleQueryAlert = proxyquire('../../../lib/modules/alerts/elasticsearch-simple-query', {
 				'../../modules/schedulers': fakeScheduler,
+				'../../utilities/logstash': proxyquire('../../../lib/utilities/logstash', {
+					'moment': fakeMoment
+				}),
 				'../../modules/sources': {
 					getSource: function() {
 						return {
@@ -66,8 +69,7 @@ describe('elasticsearch-simple-query', function() {
 							}
 						};
 					}
-				},
-				'moment': fakeMoment,
+				}
 			});
 		});
 
