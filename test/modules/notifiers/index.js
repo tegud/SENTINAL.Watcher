@@ -101,7 +101,7 @@ describe('notifiers', function() {
 
 			it('does not send multiple notifications during the time specified', function() {
 				var notifyCalled = 0;
-				var notifierConfig = { limitTo: { onceEvery: 600000 } };
+				var notifierConfig = [{ type: 'test', limitTo: { onceEvery: 600000 } }];
 
 				notifiers.registerNotifier('test', { 
 					notify: function() {
@@ -118,9 +118,30 @@ describe('notifiers', function() {
 				expect(notifyCalled).to.be(1);
 			});
 
+			it('does not send multiple notifications during the time specified by text', function() {
+				var notifyCalled = 0;
+				var notifierConfig = [{ type: 'test', limitTo: { onceEvery: '10 minutes' } }];
+
+				notifiers.registerNotifier('test', { 
+					notify: function() {
+						notifyCalled++;
+					} 
+				});
+
+				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['breach'] }]);
+
+				currentDate = '01-01-2014 00:00 Z';
+				
+				events.emit('elasticsearch-lag', { event: { level: 'breach' }, notifierConfig: notifierConfig });
+
+				events.emit('elasticsearch-lag', { event: { level: 'breach' }, notifierConfig: notifierConfig });
+
+				expect(notifyCalled).to.be(1);
+			});
+
 			it('does sends multiple notifications once the time specified has elapsed', function() {
 				var notifyCalled = 0;
-				var notifierConfig = { limitTo: { onceEvery: 600000 } };
+				var notifierConfig = [{ type: 'test', limitTo: { onceEvery: 600000 } }];
 
 				notifiers.registerNotifier('test', { 
 					notify: function() {
