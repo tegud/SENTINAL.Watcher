@@ -254,6 +254,42 @@ describe('elasticsearch-simple-query', function() {
 			}));
 		});
 
+		it('notifies of critical event when number of errors returned is over the critical threshold set', function(done) {
+			setElasticsearchResponse({
+				hits: {
+					hits: [
+						{ '_source': { '@timestamp': 12345 } }, 
+						{ '_source': { '@timestamp': 12345 } }, 
+						{ '_source': { '@timestamp': 12345 } }
+					]
+				}
+			});
+
+			notifiers.registerNotifier('test', {
+				notify: function() {
+					done();
+				}
+			});
+
+			var config = _.extend({}, defaultAlertConfig, {
+				notifications: [
+					{ "type": "test", "levels": ["critical"] }
+				],
+				thresholds: [{
+					level: 'critical',
+					type: 'maxValue',
+					limit: 2,
+					field: 'errors'
+				},{
+					type: 'maxValue',
+					limit: 1,
+					field: 'errors'
+				}]
+			});
+
+			configureAndExecuteAlert(config);
+		});
+
 		it('notifies of info event when number of errors returned is not over the threshold set', function(done) {
 			setElasticsearchResponse({
 				hits: {

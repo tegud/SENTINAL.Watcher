@@ -9,6 +9,18 @@ describe('maxValue', function() {
 		expect(thresholdResult.maxValue).to.be(1);
 	});
 
+	it('sets configured level', function() {
+		var thresholdResult = new maxValue({ getLastResult: function() {} }, { level: 'critical', limit: 1 }).checkValue();
+
+		expect(thresholdResult.level).to.be('critical');
+	});
+
+	it('defaults level to breach', function() {
+		var thresholdResult = new maxValue({ getLastResult: function() {} }, { limit: 1 }).checkValue();
+
+		expect(thresholdResult.level).to.be('breach');
+	});
+
 	it('sets threshold description', function() {
 		var thresholdResult = new maxValue({ getLastResult: function() {} }, { limit: 1 }).checkValue();
 
