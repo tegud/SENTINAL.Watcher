@@ -49,6 +49,53 @@ describe('notifiers', function() {
 
 				expect(notifyCalled).to.be(false);
 			});
+
+			it('Chooses the correct notification for multiples of the same type with different levels', function() {
+				var level;
+
+				notifiers.registerNotifier('test', { 
+					notify: function(event, notifierConfig) {
+						level = notifierConfig.levels[0];
+					} 
+				});
+
+				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['critical'] }]);
+				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['breach'] }]);
+
+				events.emit('elasticsearch-lag', { 
+					event: { level: 'breach' }, 
+					notifierConfig: [
+						{ type: 'test', levels: ['critical'], abcd: 1 }, 
+						{ type: 'test', levels: ['breach'], abcd: 2 }
+					] 
+				});
+
+				expect(level).to.be('breach');
+			});
+
+			it.skip('Executes multiple notifiers of the same type', function() {
+				var notifyCalled = 0;
+
+				notifiers.registerNotifier('test', { 
+					notify: function(event, notifierConfig) {
+						console.log(notifierConfig);
+						notifyCalled += notifierConfig.a;
+					} 
+				});
+
+				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['breach'] }]);
+				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['breach'] }]);
+
+				events.emit('elasticsearch-lag', { 
+					event: { level: 'breach' }, 
+					notifierConfig: [
+						{ type: 'test', levels: ['breach'], a: 2 }, 
+						{ type: 'test', levels: ['breach'], a: 1 }
+					] 
+				});
+
+				expect(notifyCalled).to.be(3);
+			});
 		});
 
 		describe('event level', function() {
@@ -102,7 +149,7 @@ describe('notifiers', function() {
 
 			it('does not send multiple notifications during the time specified', function() {
 				var notifyCalled = 0;
-				var notifierConfig = [{ type: 'test', limitTo: { onceEvery: 600000 } }];
+				var notifierConfig = [{ type: 'test', levels: ['all'], limitTo: { onceEvery: 600000 } }];
 
 				notifiers.registerNotifier('test', { 
 					notify: function() {
@@ -121,7 +168,7 @@ describe('notifiers', function() {
 
 			it('does not send multiple notifications during the time specified by text', function() {
 				var notifyCalled = 0;
-				var notifierConfig = [{ type: 'test', limitTo: { onceEvery: '10 minutes' } }];
+				var notifierConfig = [{ type: 'test', levels: ['all'], limitTo: { onceEvery: '10 minutes' } }];
 
 				notifiers.registerNotifier('test', { 
 					notify: function() {
@@ -142,7 +189,7 @@ describe('notifiers', function() {
 
 			it('does sends multiple notifications once the time specified has elapsed', function() {
 				var notifyCalled = 0;
-				var notifierConfig = [{ type: 'test', limitTo: { onceEvery: 600000 } }];
+				var notifierConfig = [{ type: 'test', levels: ['all'], limitTo: { onceEvery: 600000 } }];
 
 				notifiers.registerNotifier('test', { 
 					notify: function() {
@@ -167,7 +214,7 @@ describe('notifiers', function() {
 		describe('event notificationConfig', function() {
 			it('is filtered to the relevent notifier type', function() {
 				var actualNotificationConfig;
-				var expectedNotificationConfig = { type: 'test1', abcd: 1234 };
+				var expectedNotificationConfig = { type: 'test1', levels: ['all'], abcd: 1234 };
 
 				notifiers.registerNotifier('test1', { 
 					notify: function(event, notifierConfig) {
@@ -186,7 +233,7 @@ describe('notifiers', function() {
 
 				events.emit('elasticsearch-lag', { 
 					event: { level: 'info' },
-					notifierConfig: [expectedNotificationConfig, { type: 'test2', abcd: 1234 }] 
+					notifierConfig: [expectedNotificationConfig, { type: 'test2', levels: ['all'], abcd: 1234 }] 
 				});
 
 				expect(actualNotificationConfig).to.be(expectedNotificationConfig);
