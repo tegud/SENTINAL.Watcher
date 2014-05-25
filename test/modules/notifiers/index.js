@@ -3,15 +3,16 @@ var proxyquire = require('proxyquire');
 var moment = require('moment');
 
 var events = require('../../../lib/events');
+var notifiers;
 var currentDate;
-var notifiers = proxyquire('../../../lib/modules/notifiers', {
-	'moment': function() {
-		return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
-	}
-});
 
 describe('notifiers', function() {
 	beforeEach(function() {
+		 notifiers = proxyquire('../../../lib/modules/notifiers', {
+			'moment': function() {
+				return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
+			}
+		});
 		events.removeAllListeners();
 	});
 
