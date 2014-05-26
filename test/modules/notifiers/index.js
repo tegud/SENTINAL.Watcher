@@ -31,7 +31,7 @@ describe('notifiers', function() {
 
 				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['all'] }]);
 
-				events.emit('elasticsearch-lag', { event: {} });
+				events.emit('elasticsearch-lag', {});
 
 				expect(notifyCalled).to.be(true);
 			});
@@ -64,13 +64,7 @@ describe('notifiers', function() {
 				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['critical'] }]);
 				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['breach'] }]);
 
-				events.emit('elasticsearch-lag', { 
-					event: { level: 'breach' }, 
-					notifierConfig: [
-						{ type: 'test', levels: ['critical'], abcd: 1 }, 
-						{ type: 'test', levels: ['breach'], abcd: 2 }
-					] 
-				});
+				events.emit('elasticsearch-lag', { level: 'breach' });
 
 				expect(level).to.be('breach');
 			});
@@ -80,7 +74,6 @@ describe('notifiers', function() {
 
 				notifiers.registerNotifier('test', { 
 					notify: function(event, notifierConfig) {
-						console.log(notifierConfig);
 						notifyCalled += notifierConfig.a;
 					} 
 				});
@@ -88,7 +81,7 @@ describe('notifiers', function() {
 				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['breach'], a: 2 }]);
 				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['breach'], a: 1 }]);
 
-				events.emit('elasticsearch-lag', { event: { level: 'breach' } });
+				events.emit('elasticsearch-lag', { level: 'breach' });
 
 				expect(notifyCalled).to.be(3);
 			});
@@ -106,7 +99,7 @@ describe('notifiers', function() {
 
 				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['breach'] }]);
 
-				events.emit('elasticsearch-lag', { event: { level: 'breach'  } });
+				events.emit('elasticsearch-lag', { level: 'breach'  });
 
 				expect(notifyCalled).to.be(true);
 			});
@@ -122,7 +115,7 @@ describe('notifiers', function() {
 
 				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['all'] }]);
 
-				events.emit('elasticsearch-lag',{ event: { level: 'breach' } });
+				events.emit('elasticsearch-lag', { level: 'breach' });
 
 				expect(notifyCalled).to.be(true);
 			});
@@ -138,7 +131,7 @@ describe('notifiers', function() {
 
 				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['breach'] }]);
 
-				events.emit('elasticsearch-lag', { event: { level: 'info' } });
+				events.emit('elasticsearch-lag', { level: 'info' });
 
 				expect(notifyCalled).to.be(false);
 			});
@@ -155,9 +148,9 @@ describe('notifiers', function() {
 
 				notifiers.registerAlertNotifications('elasticsearch-lag', notifierConfig);
 
-				events.emit('elasticsearch-lag', { event: { level: 'breach' } });
+				events.emit('elasticsearch-lag', { level: 'breach' });
 
-				events.emit('elasticsearch-lag', { event: { level: 'breach' } });
+				events.emit('elasticsearch-lag', { level: 'breach' });
 
 				expect(notifyCalled).to.be(1);
 			});
@@ -176,16 +169,15 @@ describe('notifiers', function() {
 
 				currentDate = '01-01-2014 00:00 Z';
 				
-				events.emit('elasticsearch-lag', { event: { level: 'breach' } });
+				events.emit('elasticsearch-lag', { level: 'breach' });
 
-				events.emit('elasticsearch-lag', { event: { level: 'breach' } });
+				events.emit('elasticsearch-lag', { level: 'breach' });
 
 				expect(notifyCalled).to.be(1);
 			});
 
 			it('does sends multiple notifications once the time specified has elapsed', function() {
 				var notifyCalled = 0;
-				var notifierConfig = [{ type: 'test', levels: ['all'], limitTo: { onceEvery: 600000 } }];
 
 				notifiers.registerNotifier('test', { 
 					notify: function() {
@@ -197,11 +189,11 @@ describe('notifiers', function() {
 
 				currentDate = '01-01-2014 00:00 Z';
 
-				events.emit('elasticsearch-lag', { event: { level: 'breach' }, notifierConfig: notifierConfig });
+				events.emit('elasticsearch-lag', { level: 'breach' });
 
 				currentDate = '01-01-2014 00:11 Z';
 
-				events.emit('elasticsearch-lag', { event: { level: 'breach' }, notifierConfig: notifierConfig });
+				events.emit('elasticsearch-lag', { level: 'breach' });
 
 				expect(notifyCalled).to.be(2);
 			});

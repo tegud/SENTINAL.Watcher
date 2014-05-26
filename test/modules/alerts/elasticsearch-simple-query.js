@@ -330,5 +330,32 @@ describe('elasticsearch-simple-query', function() {
 				]
 			}));
 		});
+
+		it('sets the kibanaLink', function(done) {
+			setElasticsearchResponse({
+				hits: {
+					hits: [{ '_source': { '@timestamp': 12345 } }, { '_source': { '@timestamp': 12345 } }]
+				}
+			});
+
+			notifiers.registerNotifier('test', {
+				notify: function(event) {
+					expect(event.info.kibanaLink).to.contain('http://kibana.mydomain.com?query=*');
+					done();
+				}
+			});
+
+			configureAndExecuteAlert(_.extend({}, defaultAlertConfig, {
+				notifications: [
+					{ "type": "test", "levels": ["breach"] }
+				],
+				eventBuilders: [
+					{ 
+						type: 'kibanaLink', 
+						baseLink: 'http://kibana.mydomain.com?query=*'
+					}
+				]
+			}));
+		})
 	});
 });
