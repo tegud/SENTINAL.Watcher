@@ -9,9 +9,6 @@ var currentDate;
 describe('notifiers', function() {
 	beforeEach(function() {
 		 notifiers = proxyquire('../../../lib/modules/notifiers', {
-			'moment': function() {
-				return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
-			},
 			'./throttlers': proxyquire('../../../lib/modules/notifiers/throttler', {
 				'moment': function() {
 					return moment(currentDate, 'DD-MM-YYYY HH:mm Z');
