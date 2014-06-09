@@ -177,11 +177,11 @@ describe('elasticsearch-simple-query', function() {
 	});
 
 	describe('handles the response from elasticsearch', function() {
-		function setElasticsearchResponse(response) {
+		function setElasticsearchResponse(response, responseCode) {
 			nock('http://myelasticsearch.com:9200')
 				.filteringPath(/logstash-[0-9]{4}.[0-9]{2}.[0-9]{2}/g, 'logstash-date')
 				.post('/logstash-date%2Clogstash-date/_search')
-				.reply(200, response);
+				.reply(responseCode || 200, response);
 		}
 
 		function configureAndExecuteAlert(config) {
@@ -284,6 +284,29 @@ describe('elasticsearch-simple-query', function() {
 					type: 'maxValue',
 					limit: 1,
 					field: 'errors'
+				}]
+			});
+
+			configureAndExecuteAlert(config);
+		});
+
+		it('notifies of exception event when number of exceptions exceeds threshold', function(done) {
+			setElasticsearchResponse({}, 500);
+
+			notifiers.registerNotifier('test', {
+				notify: function() {
+					done();
+				}
+			});
+
+			var config = _.extend({}, defaultAlertConfig, {
+				notifications: [
+					{ "type": "test", "levels": ["exception"] }
+				],
+				thresholds: [{
+					level: 'exception',
+					type: 'exceptionCount',
+					limit: 1
 				}]
 			});
 

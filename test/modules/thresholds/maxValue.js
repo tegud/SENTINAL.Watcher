@@ -65,4 +65,16 @@ describe('maxValue', function() {
 
 		expect(thresholdResult.threshold).to.be('myField > 1');
 	});
+
+	it('ignores non numeric values', function() {
+		var thresholdResult = new maxValue({ getLastResult: function() { return { myField: 'exception' }; } }, 
+			{ 
+				limit: 1, 
+				field: 'myField' 
+			}).checkValue();
+
+		console.log(thresholdResult);
+
+		expect(thresholdResult.breached).to.be(false);
+	});
 });
