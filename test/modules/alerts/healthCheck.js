@@ -71,7 +71,7 @@ describe('healthCheck', function() {
             var alert = new healthCheck();
 
             notifiers.registerNotifier('test', {
-                notify: function(event) {
+                notify: function(eventName, event) {
                     expect(event.serverSets.web.groups.servers['server-01'].status).to.be('OK');
                     done();
                 }
@@ -107,7 +107,7 @@ describe('healthCheck', function() {
             responseStatusCode = 500;
 
             notifiers.registerNotifier('test', {
-                notify: function(event) {
+                notify: function(eventName, event) {
                     expect(event.serverSets.web.groups.servers['server-01'].status).to.be('Unknown');
                     done();
                 }
@@ -141,7 +141,7 @@ describe('healthCheck', function() {
             var alert = new healthCheck();
 
             notifiers.registerNotifier('test', {
-                notify: function(event) {
+                notify: function(eventName, event) {
                     expect(event.serverSets.web.groups.servers['server-02'].status).to.be('ERROR');
                     done();
                 }
@@ -177,7 +177,7 @@ describe('healthCheck', function() {
             responseStatusCode = 500;
 
             notifiers.registerNotifier('test', {
-                notify: function(event) {
+                notify: function(eventName, event) {
                     expect(event.serverSets.web.groups.servers['server-02'].status).to.be('ERROR');
                     done();
                 }
@@ -214,7 +214,7 @@ describe('healthCheck', function() {
             responseStatusCode = 500;
 
             notifiers.registerNotifier('test', {
-                notify: function(event) {
+                notify: function(eventName, event) {
                     expect(event.serverSets.web.groups.servers['server-02'].status).to.be('TIMEOUT');
                     done();
                 }
@@ -252,7 +252,7 @@ describe('healthCheck', function() {
             responseStatusCode = 500;
 
             notifiers.registerNotifier('test', {
-                notify: function(event) {
+                notify: function(eventName, event) {
                     expect(event.serverSets.web.groups.servers['server-02'].status).to.be('TIMEOUT');
                     done();
                 }

@@ -22,18 +22,25 @@ describe('notifiers', function() {
 		describe('event type', function() {
 			it('Sends notification when matching event type is received.', function() {
 				var notifyCalled = false;
+                var savedEventName, savedEvent;
 
 				notifiers.registerNotifier('test', { 
-					notify: function() {
+					notify: function(eventName, event) {
+                        savedEventName = eventName;
+                        savedEvent = event;
 						notifyCalled = true;
 					} 
 				});
 
 				notifiers.registerAlertNotifications('elasticsearch-lag', [{ type: 'test', levels: ['all'] }]);
 
-				events.emit('elasticsearch-lag', {});
+                var exampleEventName = 'elasticsearch-lag';
+                var exampleEvent = { eventInfo: "goes here"};
+                events.emit(exampleEventName, exampleEvent);
 
-				expect(notifyCalled).to.be(true);
+                expect(notifyCalled).to.be(true);
+                expect(savedEventName).to.be(exampleEventName);
+                expect(savedEvent).to.be(exampleEvent);
 			});
 
 			it('Does not send notification when a different event type is received', function() {
@@ -56,7 +63,7 @@ describe('notifiers', function() {
 				var level;
 
 				notifiers.registerNotifier('test', { 
-					notify: function(event, notifierConfig) {
+					notify: function(eventName, event, notifierConfig) {
 						level = notifierConfig.levels[0];
 					} 
 				});
@@ -73,7 +80,7 @@ describe('notifiers', function() {
 				var notifyCalled = 0;
 
 				notifiers.registerNotifier('test', { 
-					notify: function(event, notifierConfig) {
+					notify: function(eventName, event, notifierConfig) {
 						notifyCalled += notifierConfig.a;
 					} 
 				});
