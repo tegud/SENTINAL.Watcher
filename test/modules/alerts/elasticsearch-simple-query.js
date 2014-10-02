@@ -341,7 +341,7 @@ describe('elasticsearch-simple-query', function() {
 			});
 
 			notifiers.registerNotifier('test', {
-				notify: function(event) {
+				notify: function(eventName, event) {
 					expect(event.info.errors).to.be(2);
 					done();
 				}
@@ -362,7 +362,7 @@ describe('elasticsearch-simple-query', function() {
 			});
 
 			notifiers.registerNotifier('test', {
-				notify: function(event) {
+				notify: function(eventName, event) {
 					expect(event.info.kibanaLink).to.contain('http://kibana.mydomain.com?query=*');
 					done();
 				}
