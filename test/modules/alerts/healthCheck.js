@@ -79,9 +79,13 @@ describe('healthCheck', function() {
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -115,9 +119,13 @@ describe('healthCheck', function() {
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -149,9 +157,13 @@ describe('healthCheck', function() {
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -185,9 +197,13 @@ describe('healthCheck', function() {
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-02", port: 5555, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -222,9 +238,13 @@ describe('healthCheck', function() {
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -260,9 +280,13 @@ describe('healthCheck', function() {
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
