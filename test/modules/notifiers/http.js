@@ -47,6 +47,46 @@ describe('http notifier', function() {
         });
     });
 
+    describe('returns the specific status if requested', function() {
+        it('at top level', function(done) {
+            notifier.notify("myEventName", { here: "isSomeData"});
+
+            http.get('http://localhost:3000/currentStatus/myEventName', function(res) {
+                var data = '';
+
+                res.on('data', function (chunk) {
+                    data += chunk;
+                });
+
+                res.on('end', function () {
+                    var currentStatus = JSON.parse(data);
+                    expect(currentStatus).to.eql({ "here": "isSomeData"});
+                    done();
+                });
+            });
+        });
+
+        it('at second level', function(done) {
+            notifier.notify("myEventName", { here: "isSomeData"});
+
+            http.get('http://localhost:3000/currentStatus/myEventName/here', function(res) {
+                var data = '';
+
+                res.on('data', function (chunk) {
+                    data += chunk;
+                });
+
+                res.on('end', function () {
+                    console.log('data');
+                    console.dir(data);
+                    var currentStatus = JSON.parse(data);
+                    expect(currentStatus).to.eql("isSomeData");
+                    done();
+                });
+            });
+        });
+    });
+
     it('combines status for multiple events', function(done) {
         notifier.notify("myEventName", { here: "isSomeData"});
         notifier.notify("event2", { here: "isSomeOtherData"});
