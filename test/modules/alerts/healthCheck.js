@@ -72,16 +72,20 @@ describe('healthCheck', function() {
 
             notifiers.registerNotifier('test', {
                 notify: function(eventName, event) {
-                    expect(event.serverSets.web.groups.servers['server-01'].status).to.be('OK');
+                    expect(event.serverSets.team.category['server-01'].status).to.be('OK');
                     done();
                 }
             });
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -108,16 +112,20 @@ describe('healthCheck', function() {
 
             notifiers.registerNotifier('test', {
                 notify: function(eventName, event) {
-                    expect(event.serverSets.web.groups.servers['server-01'].status).to.be('Unknown');
+                    expect(event.serverSets.team.category['server-01'].status).to.be('Unknown');
                     done();
                 }
             });
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -142,16 +150,20 @@ describe('healthCheck', function() {
 
             notifiers.registerNotifier('test', {
                 notify: function(eventName, event) {
-                    expect(event.serverSets.web.groups.servers['server-02'].status).to.be('ERROR');
+                    expect(event.serverSets.team.category['server-02'].status).to.be('ERROR');
                     done();
                 }
             });
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -178,16 +190,20 @@ describe('healthCheck', function() {
 
             notifiers.registerNotifier('test', {
                 notify: function(eventName, event) {
-                    expect(event.serverSets.web.groups.servers['server-02'].status).to.be('ERROR');
+                    expect(event.serverSets.team.category['server-02'].status).to.be('ERROR');
                     done();
                 }
             });
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-02", port: 5555, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -215,16 +231,20 @@ describe('healthCheck', function() {
 
             notifiers.registerNotifier('test', {
                 notify: function(eventName, event) {
-                    expect(event.serverSets.web.groups.servers['server-02'].status).to.be('TIMEOUT');
+                    expect(event.serverSets.team.category['server-02'].status).to.be('TIMEOUT');
                     done();
                 }
             });
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -253,16 +273,20 @@ describe('healthCheck', function() {
 
             notifiers.registerNotifier('test', {
                 notify: function(eventName, event) {
-                    expect(event.serverSets.web.groups.servers['server-02'].status).to.be('TIMEOUT');
+                    expect(event.serverSets.team.category['server-02'].status).to.be('TIMEOUT');
                     done();
                 }
             });
 
             async.series([
                 async.apply(configureAndInitialiseSource, {
-                    "servers": [
-                        { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
-                    ],
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5556, healthCheck: 'test' }
+                            ]
+                        }
+                    },
                     healthCheckers: {
                         test: {
                             path: "/status",
@@ -270,6 +294,59 @@ describe('healthCheck', function() {
                             status: [
                                 { "name": "OK", statusRegex: '200' },
                                 { "name": "ERROR", statusRegex: '5[0-9]{2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info"] }
+                    ]
+                }),
+                alert.initialise
+            ]);
+        });
+
+        it('returns combined groups and subgroups of servers ', function(done) {
+            var alert = new healthCheck();
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    expect(event.serverSets.team.category['server-02'].status).to.be('OK');
+                    expect(event.serverSets.web.category['server-03'].status).to.be('OK');
+                    expect(event.serverSets.api.services['server-03'].status).to.be('OK');
+                    expect(event.serverSets.api.services['server-04'].status).to.be('OK');
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5555, healthCheck: 'test' }
+                            ]
+                        },
+                        "web": {
+                            "category": [
+                                { host: "localhost", name: "server-03", port: 5555, healthCheck: 'test' }
+                            ]
+                        },
+                        "api": {
+                            "services": [
+                                { host: "localhost", name: "server-03", port: 5555, healthCheck: 'test' },
+                                { host: "localhost", name: "server-04", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            path: "/status",
+                            timeout: { timeout: 50, status: 'TIMEOUT' },
+                            status: [
+                                { "name": "OK", statusRegex: '200' },
                             ]
                         }
                     }
