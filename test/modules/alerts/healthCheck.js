@@ -411,4 +411,137 @@ describe('healthCheck', function() {
             ]);
         });
     });
+
+    describe('fires alerts', function() {
+        it('fires info status when no threshold configured', function(done) {
+            var alert = new healthCheck();
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    expect(event.level).to.be('info');
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            path: "/status",
+                            status: [
+                                { "name": "OK", statusRegex: '200' },
+                                { "name": "ERROR", statusRegex: '5[0-9]{0,2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info"] }
+                    ]
+                }),
+                alert.initialise
+            ]);
+        });
+
+        it('does not fire when servers healthy and configured for 1 failed check', function(done) {
+            var alert = new healthCheck();
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    expect(event.level).to.be('info');
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            path: "/status",
+                            status: [
+                                { "name": "OK", statusRegex: '200' },
+                                { "name": "ERROR", statusRegex: '5[0-9]{0,2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info", "critical"] }
+                    ],
+                    thresholds: [{
+                        type: 'maxHealthCheckValue',
+                        status: 'ERROR',
+                        limit: 1,
+                        level: 'critical'
+                    }]
+                }),
+                alert.initialise
+            ]);
+        });
+
+        it('fires when servers unhealthy and configured for 1 failed check', function(done) {
+            var alert = new healthCheck();
+
+            responseStatusCode = 500;
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    expect(event.level).to.be('critical');
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            path: "/status",
+                            status: [
+                                { "name": "OK", statusRegex: '200' },
+                                { "name": "ERROR", statusRegex: '5[0-9]{0,2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info", "critical"] }
+                    ],
+                    thresholds: [{
+                        type: 'maxHealthCheckValue',
+                        status: 'ERROR',
+                        limit: 1,
+                        level: 'critical'
+                    }]
+                }),
+                alert.initialise
+            ]);
+        });
+    });
 });
