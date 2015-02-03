@@ -37,9 +37,11 @@ function configureAndInitialiseSource(config, callback) {
 describe('healthCheck', function() {
     var server;
     var responseStatusCode;
+    var getResponseStatusCode;
 
     beforeEach(function(done) {
         responseStatusCode = 200;
+        getResponseStatusCode = function() { return responseStatusCode; };
 
         notifiers.clear();
         sources.clear();
@@ -51,7 +53,7 @@ describe('healthCheck', function() {
         async.series([
             function(callback) {
                 server = http.createServer(function (req, res) {
-                    res.writeHead(responseStatusCode);
+                    res.writeHead(getResponseStatusCode());
                     res.end();
                 });
 
@@ -356,6 +358,187 @@ describe('healthCheck', function() {
                     notifications: [
                         { "type": "test", "levels": ["info"] }
                     ]
+                }),
+                alert.initialise
+            ]);
+        });
+
+        it('returns count of servers in each state in a group', function(done) {
+            var alert = new healthCheck();
+
+            var responseStatusCodes = [ 500, 200, 200, 200 ];
+            getResponseStatusCode = function() { return responseStatusCodes.shift(); };
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    console.dir(event.serverSetCounts.api.services['OK']);
+                    expect(event.serverSetCounts.api.services['OK']).to.be(3);
+                    expect(event.serverSetCounts.api.services['ERROR']).to.be(1);
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "api": {
+                            "services": [
+                                { host: "localhost", name: "server-02", port: 5555, healthCheck: 'test' },
+                                { host: "localhost", name: "server-03", port: 5555, healthCheck: 'test' },
+                                { host: "localhost", name: "server-04", port: 5555, healthCheck: 'test' },
+                                { host: "localhost", name: "server-05", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            path: "/status",
+                            timeout: { timeout: 50, status: 'TIMEOUT' },
+                            status: [
+                                { "name": "OK", statusRegex: '200' },
+                                { "name": "ERROR", statusRegex: '5[0-9]{0,2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info"] }
+                    ]
+                }),
+                alert.initialise
+            ]);
+        });
+    });
+
+    describe('fires alerts', function() {
+        it('fires info status when no threshold configured', function(done) {
+            var alert = new healthCheck();
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    expect(event.level).to.be('info');
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            path: "/status",
+                            status: [
+                                { "name": "OK", statusRegex: '200' },
+                                { "name": "ERROR", statusRegex: '5[0-9]{0,2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info"] }
+                    ]
+                }),
+                alert.initialise
+            ]);
+        });
+
+        it('does not fire when servers healthy and configured for 1 failed check', function(done) {
+            var alert = new healthCheck();
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    expect(event.level).to.be('info');
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            path: "/status",
+                            status: [
+                                { "name": "OK", statusRegex: '200' },
+                                { "name": "ERROR", statusRegex: '5[0-9]{0,2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info", "critical"] }
+                    ],
+                    thresholds: [{
+                        type: 'maxHealthCheckValue',
+                        status: 'ERROR',
+                        limit: 1,
+                        level: 'critical'
+                    }]
+                }),
+                alert.initialise
+            ]);
+        });
+
+        it('fires when servers unhealthy and configured for 1 failed check', function(done) {
+            var alert = new healthCheck();
+
+            responseStatusCode = 500;
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    expect(event.level).to.be('critical');
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-01", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            path: "/status",
+                            status: [
+                                { "name": "OK", statusRegex: '200' },
+                                { "name": "ERROR", statusRegex: '5[0-9]{0,2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info", "critical"] }
+                    ],
+                    thresholds: [{
+                        type: 'maxHealthCheckValue',
+                        status: 'ERROR',
+                        limit: 1,
+                        level: 'critical'
+                    }]
                 }),
                 alert.initialise
             ]);
