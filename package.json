@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "async": "^0.8.0",
+    "bluebird": "^2.9.8",
     "elasticsearch": "^2.1.4",
     "handlebars": "^2.0.0-alpha.2",
     "lodash": "^2.4.1",
