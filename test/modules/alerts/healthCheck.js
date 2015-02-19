@@ -254,8 +254,8 @@ describe('healthCheck', function() {
                         test: {
                             path: "/status",
                             status: [
-                                { "name": "ERROR", contentRegex: '"alive":false' },
-                                { "name": "OK", statusRegex: '200' }
+                                { "name": "ERROR", "contentRegex": "\"alive\":false" },
+                                { "name": "OK", "statusRegex": "200" }
                             ]
                         }
                     }
