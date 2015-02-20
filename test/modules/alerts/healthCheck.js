@@ -38,9 +38,11 @@ describe('healthCheck', function() {
     var server;
     var responseStatusCode;
     var getResponseStatusCode;
+    var responseContent;
 
     beforeEach(function(done) {
         responseStatusCode = 200;
+        responseContent = undefined;
         getResponseStatusCode = function() { return responseStatusCode; };
 
         notifiers.clear();
@@ -54,7 +56,7 @@ describe('healthCheck', function() {
             function(callback) {
                 server = http.createServer(function (req, res) {
                     res.writeHead(getResponseStatusCode());
-                    res.end();
+                    res.end(responseContent);
                 });
 
                 server.listen(5555, function() {
@@ -212,6 +214,48 @@ describe('healthCheck', function() {
                             status: [
                                 { "name": "OK", statusRegex: '200' },
                                 { "name": "ERROR", statusRegex: '5[0-9]{0,2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info"] }
+                    ]
+                }),
+                alert.initialise
+            ]);
+        });
+
+        it('returns Error status when server returns an alive: false content', function(done) {
+            var alert = new healthCheck();
+
+            responseStatusCode = 200;
+            responseContent = '{"alive":true,"stingray":{"alive":false,"currentEndpoint":"https://172.10.10.85:9070"}}';
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    expect(event.serverSets.team.category['server-02'].status).to.be('ERROR');
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "server-02", port: 5555, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            path: "/status",
+                            status: [
+                                { "name": "ERROR", "contentRegex": "\"alive\":false" },
+                                { "name": "OK", "statusRegex": "200" }
                             ]
                         }
                     }
