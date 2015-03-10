@@ -1,6 +1,8 @@
 var expect = require('expect.js');
 var async = require('async');
 var http = require('http');
+var https = require('https');
+var fs = require('fs');
 var proxyquire = require('proxyquire');
 
 var sources = require('../../../lib/modules/sources');
@@ -35,7 +37,8 @@ function configureAndInitialiseSource(config, callback) {
 }
 
 describe('healthCheck', function() {
-    var server;
+    var httpserver;
+    var httpsserver;
     var responseStatusCode;
     var getResponseStatusCode;
     var responseContent;
@@ -54,12 +57,26 @@ describe('healthCheck', function() {
 
         async.series([
             function(callback) {
-                server = http.createServer(function (req, res) {
+                httpserver = http.createServer(function (req, res) {
                     res.writeHead(getResponseStatusCode());
                     res.end(responseContent);
                 });
 
-                server.listen(5555, function() {
+                httpserver.listen(5555, function() {
+                    callback();
+                });
+            },
+            function(callback) {
+                var options = {
+                    pfx: fs.readFileSync(__dirname + '/server.pfx'),
+                    passphrase: 'password'
+                };
+                httpsserver = https.createServer(options, function (req, res) {
+                    res.writeHead(getResponseStatusCode());
+                    res.end(responseContent);
+                });
+
+                httpsserver.listen(5565, function() {
                     callback();
                 });
             }
@@ -67,7 +84,8 @@ describe('healthCheck', function() {
     });
 
     afterEach(function() {
-        server.close();
+        httpserver.close();
+        httpsserver.close();
     });
 
     describe('returns status of configured server', function() {
@@ -415,7 +433,6 @@ describe('healthCheck', function() {
 
             notifiers.registerNotifier('test', {
                 notify: function(eventName, event) {
-                    console.dir(event.serverSetCounts.api.services['OK']);
                     expect(event.serverSetCounts.api.services['OK']).to.be(3);
                     expect(event.serverSetCounts.api.services['ERROR']).to.be(1);
                     done();
@@ -441,6 +458,48 @@ describe('healthCheck', function() {
                             status: [
                                 { "name": "OK", statusRegex: '200' },
                                 { "name": "ERROR", statusRegex: '5[0-9]{0,2}' }
+                            ]
+                        }
+                    }
+                }),
+                async.apply(alert.configure, {
+                    source: 'healthChecker',
+                    notifications: [
+                        { "type": "test", "levels": ["info"] }
+                    ]
+                }),
+                alert.initialise
+            ]);
+        });
+
+    });
+
+    describe('supports', function() {
+        it('https', function(done) {
+            var alert = new healthCheck();
+
+            notifiers.registerNotifier('test', {
+                notify: function(eventName, event) {
+                    expect(event.serverSets.team.category['localhost'].status).to.be('OK');
+                    done();
+                }
+            });
+
+            async.series([
+                async.apply(configureAndInitialiseSource, {
+                    "groups": {
+                        "team": {
+                            "category": [
+                                { host: "localhost", name: "localhost", port: 5565, healthCheck: 'test' }
+                            ]
+                        }
+                    },
+                    healthCheckers: {
+                        test: {
+                            secure: true,
+                            path: "/status",
+                            status: [
+                                { "name": "OK", statusRegex: '200' }
                             ]
                         }
                     }
