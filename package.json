@@ -20,6 +20,7 @@
     "proxyquire": "^0.6.0"
   },
   "dependencies": {
+    "array-events": "^0.2.0",
     "async": "^1.2.1",
     "bluebird": "^2.9.8",
     "debug": "^2.2.0",
