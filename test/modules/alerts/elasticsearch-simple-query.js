@@ -22,7 +22,7 @@ var fakeScheduler = {
 	}
 };
 
-describe('elasticsearch-simple-query', function() {
+describe.skip('elasticsearch-simple-query', function() {
 	describe('queries elasticsearch', function() {
 		var elasticsearchSimpleQueryAlert;
 		var elasticsearchQueryBuilder;
