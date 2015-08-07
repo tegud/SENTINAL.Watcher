@@ -20,14 +20,17 @@
     "proxyquire": "^0.6.0"
   },
   "dependencies": {
-    "async": "^0.8.0",
+    "array-events": "^0.2.0",
+    "async": "^1.2.1",
     "bluebird": "^2.9.8",
     "debug": "^2.2.0",
     "elasticsearch": "^2.1.4",
     "handlebars": "^2.0.0-alpha.2",
     "kafka-node": "^0.2.27",
     "lodash": "^2.4.1",
+    "metrics": "^0.1.9",
     "moment": "^2.6.0",
+    "node-zookeeper-client": "^0.2.2",
     "nodemailer": "^0.6.3",
     "restify": "^2.8.2"
   }
