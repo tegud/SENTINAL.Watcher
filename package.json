@@ -23,7 +23,7 @@
     "async": "^0.8.0",
     "bluebird": "^2.9.8",
     "debug": "^2.2.0",
-    "elasticsearch": "^2.1.4",
+    "elasticsearch": "^11.0.0",
     "handlebars": "^2.0.0-alpha.2",
     "kafka-node": "^0.2.27",
     "lodash": "^2.4.1",
